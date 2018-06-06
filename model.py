@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from sklearn.metrics import average_precision_score
+from load_data import DataLoader
 
 
 class TableNode(object):
@@ -23,7 +24,7 @@ class LSH:
         p1, p2 = np.array(p1), np.array(p2)
         return np.sqrt(np.sum(np.square(p1 - p2)))
 
-    def genPara(self, d):
+    def genPara(self, d, r):
         """
         :param d: length of data vector
         :return: a
@@ -32,10 +33,11 @@ class LSH:
         a = []
         for i in range(d):
             a.append(random.gauss(0, 1))
+        b = random.uniform(0,r)
 
-        return a
+        return a, b
 
-    def gen_e2LSH_family(self, d, k):
+    def gen_e2LSH_family(self, d, k, r):
         """
         :param d: length of data vector
         :param k:
@@ -44,7 +46,7 @@ class LSH:
         """
         result = []
         for i in range(k):
-            result.append(self.genPara(d))
+            result.append(self.genPara(d, r))
 
         return result
 
@@ -60,7 +62,7 @@ class LSH:
         hashVals = []
 
         for hab in e2LSH_family:
-            hashVal = (np.inner(np.array(hab), p)) // r
+            hashVal = (np.inner(hab[0], p) + hab[1]) // r
             hashVals.append(hashVal)
 
         return hashVals
@@ -72,7 +74,7 @@ class LSH:
         :param k, C: parameter
         :return: the fingerprint of (x1, x2, ..., xk), a int value
         """
-        return sum([(hashVals[i] * fpRand[i]) for i in range(k)]) % C
+        return int(sum([(hashVals[i] * fpRand[i]) for i in range(k)]) % C)
 
     def e2LSH(self, dataSet, k, L, r, tableSize):
         """
@@ -99,7 +101,7 @@ class LSH:
 
         for times in range(L):
 
-            e2LSH_family = self.gen_e2LSH_family(d, k)
+            e2LSH_family = self.gen_e2LSH_family(d, k, r)
 
             # hashFuncs: [[h1, ...hk], [h1, ..hk], ..., [h1, ...hk]]
             # hashFuncs include L hash functions group, and each group contain k hash functions

@@ -129,9 +129,9 @@ class DataLoader:
         true_ids = [cat_name_to_id[c] for c in cat]
 
         # read features:
-        [img_list, bboxes] = _pickle.load(open(os.path.join(self.dataDir, 'bboxes_retrieval',
+        bboxes = _pickle.load(open(os.path.join(self.dataDir, 'bboxes_retrieval',
                                                             '{}_bboxes_retrieval.p'.format(self.dataType)), 'rb'),
-                                          encoding='latin1')
+                                          encoding='latin1')[1]
 
         [img_ids, feats] = _pickle.load(open(os.path.join(self.dataDir, 'features2_small', '{}.p'.format(self.dataType)), 'rb'),
                                         encoding='latin1')
@@ -143,8 +143,8 @@ class DataLoader:
                 print('Discard image from consideration.')
                 continue
             # print('# bboxes per img: ', len(bboxes[i]))
-            if self.dataType == "val2014" or self.dataType == "test2014":
-                bboxes[i] = random.choice(bboxes[i])
+            # if self.dataType == "val2014" or self.dataType == "test2014":
+            #     bboxes[i] = random.choice(bboxes[i])
 
             img_id = img_ids[i]
             img = coco.loadImgs([img_id])[0]
@@ -173,15 +173,14 @@ class DataLoader:
                 self.label.append(lab)
 
                 img_feats = feats[i]
-                dataType = '{}_2'.format(self.dataType)
                 img_pil = Image.open(
-                    '%s/%s/%s' % (self.dataDir, dataType, img['file_name']))  # make sure data dir is correct
+                    '%s/%s_2/%s' % (self.dataDir, self.dataType, img['file_name']))  # make sure data dir is correct
 
                 featurizer = self.Featurizer()
                 projected_bbox = self.project_onto_feature_space(bbox, img_pil.size)
                 bbox_feats = featurizer.featurize(projected_bbox, img_feats)
                 self.feats.append(bbox_feats.flatten())
-                if dataType == "train2014":
+                if self.dataType == "train2014":
                     self.id.append(img_id)
 
         self.feats = np.array(self.feats)
